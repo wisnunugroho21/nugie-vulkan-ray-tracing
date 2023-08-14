@@ -12,12 +12,12 @@ namespace nugiEngine {
 			EngineForwardPassDescSet(EngineDevice& device, std::shared_ptr<EngineDescriptorPool> descriptorPool, 
         std::vector<VkDescriptorBufferInfo> uniformBufferInfo, VkDescriptorBufferInfo buffersInfo[2]);
 
-			VkDescriptorSet getDescriptorSets(int frameIndex) { return this->descriptorSets[frameIndex]; }
+			std::shared_ptr<VkDescriptorSet> getDescriptorSets(int frameIndex) { return this->descriptorSets[frameIndex]; }
 			std::shared_ptr<EngineDescriptorSetLayout> getDescSetLayout() const { return this->descSetLayout; }
 
 		private:
       std::shared_ptr<EngineDescriptorSetLayout> descSetLayout;
-			std::vector<VkDescriptorSet> descriptorSets;
+			std::vector<std::shared_ptr<VkDescriptorSet>> descriptorSets;
 
 			void createDescriptor(EngineDevice& device, std::shared_ptr<EngineDescriptorPool> descriptorPool, 
         std::vector<VkDescriptorBufferInfo> uniformBufferInfo, VkDescriptorBufferInfo buffersInfo[2]);

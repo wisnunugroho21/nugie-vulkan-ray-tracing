@@ -10,7 +10,7 @@
 #include <string>
 
 namespace nugiEngine {
-	EngineForwardPassRenderSystem::EngineForwardPassRenderSystem(EngineDevice& device, std::shared_ptr<EngineRenderPass> renderPass, std::shared_ptr<std::vector<EngineDescriptorSetLayout>> descriptorSetLayouts)
+	EngineForwardPassRenderSystem::EngineForwardPassRenderSystem(EngineDevice& device, std::shared_ptr<EngineRenderPass> renderPass, std::shared_ptr<EngineDescriptorSetLayout> descriptorSetLayouts)
 		: appDevice{device}
 	{
 		this->createPipelineLayout(descriptorSetLayouts);
@@ -21,16 +21,13 @@ namespace nugiEngine {
 		vkDestroyPipelineLayout(this->appDevice.getLogicalDevice(), this->pipelineLayout, nullptr);
 	}
 
-	void EngineForwardPassRenderSystem::createPipelineLayout(std::shared_ptr<std::vector<EngineDescriptorSetLayout>> descriptorSetLayouts) {
-		std::vector<VkDescriptorSetLayout> descSetLayouts{};
-		for (uint32_t i = 0; i < descriptorSetLayouts->size(); i++) {
-			descSetLayouts.emplace_back((*descriptorSetLayouts)[i].getDescriptorSetLayout());
-		}
-		
+	void EngineForwardPassRenderSystem::createPipelineLayout(std::shared_ptr<EngineDescriptorSetLayout> descriptorSetLayout) {
+		VkDescriptorSetLayout descSetLayout = descriptorSetLayout->getDescriptorSetLayout();
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descSetLayouts.size());
-		pipelineLayoutInfo.pSetLayouts = descSetLayouts.data();
+		pipelineLayoutInfo.setLayoutCount = 1u;
+		pipelineLayoutInfo.pSetLayouts = &descSetLayout;
 		pipelineLayoutInfo.pushConstantRangeCount = 0;
 		pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -53,7 +50,8 @@ namespace nugiEngine {
 			.build();
 	}
 
-	void EngineForwardPassRenderSystem::render(std::shared_ptr<EngineCommandBuffer> commandBuffer, std::shared_ptr<std::vector<VkDescriptorSet>> descriptorSets, std::shared_ptr<EngineVertexModel> model) {
+	void EngineForwardPassRenderSystem::render(std::shared_ptr<EngineCommandBuffer> commandBuffer, std::shared_ptr<VkDescriptorSet> descriptorSet, std::shared_ptr<EngineVertexModel> model) {
+		VkDescriptorSet descSet = *descriptorSet;
 		this->pipeline->bind(commandBuffer->getCommandBuffer());
 
 		vkCmdBindDescriptorSets(
@@ -61,8 +59,8 @@ namespace nugiEngine {
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			this->pipelineLayout,
 			0,
-			static_cast<uint32_t>(descriptorSets->size()),
-			descriptorSets->data(),
+			1u,
+			&descSet,
 			0,
 			nullptr
 		);

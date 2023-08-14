@@ -37,7 +37,7 @@ namespace nugiEngine {
 				auto commandBuffer = this->renderer->beginCommand();
 				
 				this->swapChainSubRenderer->beginRenderPass(commandBuffer, imageIndex);
-				this->forwardPassRender->render(commandBuffer, descSets, this->vertexModels);
+				this->forwardPassRender->render(commandBuffer, this->forwardPassDescSet->getDescriptorSets(frameIndex), this->vertexModels);
 				this->swapChainSubRenderer->endRenderPass(commandBuffer);
 
 				this->renderer->endCommand(commandBuffer);
