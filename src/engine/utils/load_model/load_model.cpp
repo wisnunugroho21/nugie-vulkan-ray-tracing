@@ -28,13 +28,13 @@ namespace nugiEngine
 				int vertexIndex1 = shape.mesh.indices[3 * i + 1].vertex_index;
 				int vertexIndex2 = shape.mesh.indices[3 * i + 2].vertex_index;
 
-				int textCoordIndex0 = shape.mesh.indices[3 * i + 0].texcoord_index;
+				/* int textCoordIndex0 = shape.mesh.indices[3 * i + 0].texcoord_index;
 				int textCoordIndex1 = shape.mesh.indices[3 * i + 1].texcoord_index;
 				int textCoordIndex2 = shape.mesh.indices[3 * i + 2].texcoord_index;
 
 				int normalIndex0 = shape.mesh.indices[3 * i + 0].normal_index;
 				int normalIndex1 = shape.mesh.indices[3 * i + 1].normal_index;
-				int normalIndex2 = shape.mesh.indices[3 * i + 2].normal_index;
+				int normalIndex2 = shape.mesh.indices[3 * i + 2].normal_index; */
 
 				Vertex vertex0;
 				Vertex vertex1;
@@ -61,7 +61,7 @@ namespace nugiEngine
           1.0f
 				};
 
-        vertex0.normal = glm::vec4{
+        /* vertex0.normal = glm::vec4{
 					attrib.normals[3 * normalIndex0 + 0],
 					attrib.normals[3 * normalIndex0 + 1],
 					attrib.normals[3 * normalIndex0 + 2],
@@ -80,9 +80,9 @@ namespace nugiEngine
 					attrib.normals[3 * normalIndex2 + 1],
 					attrib.normals[3 * normalIndex2 + 2],
           1.0f
-				};
+				}; */
 
-				vertex0.textCoord = glm::vec4{
+				/* vertex0.textCoord = glm::vec4{
 					attrib.texcoords[2 * textCoordIndex0 + 0],
 					1.0f - attrib.texcoords[2 * textCoordIndex0 + 1],
           1.0f,
@@ -101,7 +101,7 @@ namespace nugiEngine
 					1.0f - attrib.texcoords[2 * textCoordIndex2 + 1],
           1.0f,
           1.0f
-				};
+				}; */
 
 				vertex0.transformIndex = transformIndex;
 				vertex1.transformIndex = transformIndex;

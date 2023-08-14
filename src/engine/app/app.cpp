@@ -116,7 +116,7 @@ namespace nugiEngine {
 		
 		// kiri
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
-		uint32_t transformIndex = static_cast<uint32_t>(transforms->size() - 1);
+		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
@@ -134,7 +134,7 @@ namespace nugiEngine {
 		
 		// bawah
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
-		uint32_t transformIndex = static_cast<uint32_t>(transforms->size() - 1);
+		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
 		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
@@ -152,7 +152,7 @@ namespace nugiEngine {
 		
 		// atas
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
-		uint32_t transformIndex = static_cast<uint32_t>(transforms->size() - 1);
+		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
 		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
@@ -170,7 +170,7 @@ namespace nugiEngine {
 		
 		// depan
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
-		uint32_t transformIndex = static_cast<uint32_t>(transforms->size() - 1);
+		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
 		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });

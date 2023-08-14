@@ -31,19 +31,17 @@ namespace nugiEngine {
   }
   
   EngineBuffer::EngineBuffer(
-      EngineDevice &device,
-      VkDeviceSize instanceSize,
-      uint32_t instanceCount,
-      VkBufferUsageFlags bufferUsage,
-      VmaMemoryUsage memoryUsageFlags,
-      VmaAllocationCreateFlags memoryPropertyFlags,
-      VkDeviceSize minOffsetAlignment
-    )
-      : engineDevice{device},
-        instanceSize{instanceSize},
-        instanceCount{instanceCount},
-        usageFlags{memoryUsageFlags},
-        memoryPropertyFlags{memoryPropertyFlags} 
+    EngineDevice &device,
+    VkDeviceSize instanceSize,
+    uint32_t instanceCount,
+    VkBufferUsageFlags bufferUsage,
+    VmaMemoryUsage memoryUsageFlags,
+    VmaAllocationCreateFlags memoryPropertyFlags,
+    VkDeviceSize minOffsetAlignment
+  )
+    : engineDevice{device},
+      instanceSize{instanceSize},
+      instanceCount{instanceCount}
   {
     this->alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
     this->bufferSize = alignmentSize * instanceCount;

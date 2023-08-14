@@ -19,7 +19,7 @@ namespace nugiEngine {
   }
 
   uint32_t Aabb::randomAxis() {
-    return arc4random() % 3;
+    return rand() % 3;
   }
 
   Aabb PrimitiveBoundBox::boundingBox() {

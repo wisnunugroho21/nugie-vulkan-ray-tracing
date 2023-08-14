@@ -44,9 +44,6 @@ class EngineBuffer {
   VkBuffer getBuffer() const { return buffer; }
   void* getMappedMemory() const { return mapped; }
   uint32_t getInstanceCount() const { return instanceCount; }
-  
-  VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
-  VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
 
   VkDeviceSize getInstanceSize() const { return instanceSize; }
   VkDeviceSize getAlignmentSize() const { return instanceSize; }
@@ -65,8 +62,6 @@ class EngineBuffer {
  
   VkDeviceSize bufferSize, instanceSize, alignmentSize;
   uint32_t instanceCount;
-  VkBufferUsageFlags usageFlags;
-  VkMemoryPropertyFlags memoryPropertyFlags;
 };
  
 }  // namespace lve
