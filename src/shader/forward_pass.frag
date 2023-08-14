@@ -1,6 +1,6 @@
 #version 460
 
-#include "core/struct.glsl"
+#include "struct.glsl"
 
 layout(location = 0) in vec3 positionFrag;
 layout(location = 1) flat in uint materialIndexFrag;

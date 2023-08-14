@@ -1,6 +1,6 @@
 #version 460
 
-#include "core/struct.glsl"
+#include "struct.glsl"
 
 layout(location = 0) in vec4 position;
 layout(location = 1) in uint materialIndex;

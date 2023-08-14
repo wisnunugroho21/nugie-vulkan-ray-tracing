@@ -58,7 +58,7 @@ namespace nugiEngine {
 	}
 
 	void EngineApp::run() {
-		auto currentTime = std::chrono::high_resolution_clock::now();
+		// auto currentTime = std::chrono::high_resolution_clock::now();
 		uint32_t t = 0;
 
 		// this->rayTraceUniforms->writeGlobalData(0, this->globalUbo);
