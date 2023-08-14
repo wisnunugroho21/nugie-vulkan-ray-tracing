@@ -19,13 +19,13 @@ namespace nugiEngine {
 		
 		this->descriptorSets.clear();
 		for (int i = 0; i < EngineDevice::MAX_FRAMES_IN_FLIGHT; i++) {
-			auto descSet = std::make_shared<VkDescriptorSet>();
+			VkDescriptorSet descSet{};
 
 			EngineDescriptorWriter(*this->descSetLayout, *descriptorPool)
 				.writeBuffer(0, &uniformBufferInfo[i])
 				.writeBuffer(1, &buffersInfo[0])
 				.writeBuffer(2, &buffersInfo[1])
-				.build(descSet.get());
+				.build(&descSet);
 
 			this->descriptorSets.emplace_back(descSet);
 		}

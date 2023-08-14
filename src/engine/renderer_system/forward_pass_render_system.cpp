@@ -50,8 +50,7 @@ namespace nugiEngine {
 			.build();
 	}
 
-	void EngineForwardPassRenderSystem::render(std::shared_ptr<EngineCommandBuffer> commandBuffer, std::shared_ptr<VkDescriptorSet> descriptorSet, std::shared_ptr<EngineVertexModel> model) {
-		VkDescriptorSet descSet = *descriptorSet;
+	void EngineForwardPassRenderSystem::render(std::shared_ptr<EngineCommandBuffer> commandBuffer, VkDescriptorSet descriptorSet, std::shared_ptr<EngineVertexModel> model) {
 		this->pipeline->bind(commandBuffer->getCommandBuffer());
 
 		vkCmdBindDescriptorSets(
@@ -60,7 +59,7 @@ namespace nugiEngine {
 			this->pipelineLayout,
 			0,
 			1u,
-			&descSet,
+			&descriptorSet,
 			0,
 			nullptr
 		);
