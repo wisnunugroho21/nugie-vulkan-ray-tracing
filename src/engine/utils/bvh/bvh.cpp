@@ -19,24 +19,31 @@ namespace nugiEngine {
   }
 
   uint32_t Aabb::randomAxis() {
-    return rand() % 3;
+    return arc4random() % 3;
   }
 
   Aabb PrimitiveBoundBox::boundingBox() {
     return Aabb { 
-      glm::min(glm::min((*this->vertices)[this->primitive.indices.x].position, (*this->vertices)[this->primitive.indices.y].position), (*this->vertices)[this->primitive.indices.z].position) - eps,
-      glm::max(glm::max((*this->vertices)[this->primitive.indices.x].position, (*this->vertices)[this->primitive.indices.y].position), (*this->vertices)[this->primitive.indices.z].position) + eps
+      glm::min(glm::min((*this->vertices)[this->primitive.indices.x].position, (*this->vertices)[this->primitive.indices.y].position), (*this->vertices)[this->primitive.indices.z].position) - glm::vec4(eps, 0.0f),
+      glm::max(glm::max((*this->vertices)[this->primitive.indices.x].position, (*this->vertices)[this->primitive.indices.y].position), (*this->vertices)[this->primitive.indices.z].position) + glm::vec4(eps, 0.0f)
+    };
+  }
+
+  Aabb PointLightBoundBox::boundingBox() {
+    return Aabb { 
+      this->light.position - eps,
+      this->light.position + eps
     };
   }
 
   Aabb TriangleLightBoundBox::boundingBox() {
     return Aabb { 
-      glm::min(glm::min((*this->vertices)[this->light.indices.x].position, (*this->vertices)[this->light.indices.y].position), (*this->vertices)[this->light.indices.z].position) - eps,
-      glm::max(glm::max((*this->vertices)[this->light.indices.x].position, (*this->vertices)[this->light.indices.y].position), (*this->vertices)[this->light.indices.z].position) + eps
+      glm::min(glm::min(this->light.point0, this->light.point1), this->light.point2) - eps,
+      glm::max(glm::max(this->light.point0, this->light.point1), this->light.point2) + eps
     };
   }
 
-  ObjectBoundBox::ObjectBoundBox(uint32_t i, Object &o, std::shared_ptr<std::vector<Primitive>> p, std::shared_ptr<TransformComponent> t, std::shared_ptr<std::vector<RayTraceVertex>> v) : BoundBox(i), object{o}, primitives{p}, transformation{t}, vertices{v} {
+  ObjectBoundBox::ObjectBoundBox(uint32_t i, Object &o, std::shared_ptr<std::vector<Primitive>> p, std::shared_ptr<TransformComponent> t, std::shared_ptr<std::vector<Vertex>> v) : BoundBox(i), object{o}, primitives{p}, transformation{t}, vertices{v} {
     this->originalMin = glm::vec3(this->findMin(0), this->findMin(1), this->findMin(2));
     this->originalMax = glm::vec3(this->findMax(0), this->findMax(1), this->findMax(2));
   }
@@ -110,10 +117,6 @@ namespace nugiEngine {
     node.maximum = box.max;      
 
     if (leaf) {
-      if (objects.empty()) {
-        return node;
-      }
-      
       node.leftObjIndex = objects[0]->index;
 
       if (objects.size() > 1) {
@@ -149,7 +152,7 @@ namespace nugiEngine {
     return outputBox;
   }
 
-  bool boxCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b, int axis) {
+  bool boxCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b, uint32_t axis) {
     Aabb boxA = a->boundingBox();
     Aabb boxB = b->boundingBox();
 
@@ -171,7 +174,7 @@ namespace nugiEngine {
     return boxCompare(a, b, 2);
   }
 
-  int findPrimitiveSplitIndex(BvhItemBuild node, int axis, float length) {
+  uint32_t findPrimitiveSplitIndex(BvhItemBuild node, int axis, float length) {
     float costArr[splitNumber]{};
 
     for (int i = 0; i < splitNumber; i++) {
@@ -197,7 +200,7 @@ namespace nugiEngine {
       costArr[i] = 0.5f + probLeft * totalLeft * 1.0f + probRight * totalRight * 1.0f;
     }
 
-    return static_cast<int>(std::distance(costArr, std::min_element(costArr, costArr + splitNumber)));
+    return static_cast<uint32_t>(std::distance(costArr, std::min_element(costArr, costArr + splitNumber)));
   }
 
   // Since GPU can't deal with tree structures we need to create a flattened BVH.

@@ -1,7 +1,7 @@
 #include "texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../../../libraries/stb_image/stb_image.h"
+#include <stb_image.h>
 
 #include <vulkan/vulkan.h>
 #include <stdexcept>
@@ -11,9 +11,17 @@
 #include "../command/command_buffer.hpp"
 
 namespace nugiEngine {
-  EngineTexture::EngineTexture(EngineDevice &appDevice, const char* textureFileName) : appDevice{appDevice} {
+  EngineTexture::EngineTexture(EngineDevice &appDevice, const char* textureFileName, VkFilter filterMode, VkSamplerAddressMode addressMode, 
+    VkBool32 anistropyEnable, VkBorderColor borderColor, VkCompareOp compareOp, VkSamplerMipmapMode mipmapMode) : appDevice{appDevice} 
+  {
     this->createTextureImage(textureFileName);
-    this->createTextureSampler();
+    this->createTextureSampler(filterMode, addressMode, anistropyEnable, borderColor, compareOp, mipmapMode);
+  }
+
+  EngineTexture::EngineTexture(EngineDevice &appDevice, std::shared_ptr<EngineImage> image, VkFilter filterMode, VkSamplerAddressMode addressMode, 
+    VkBool32 anistropyEnable, VkBorderColor borderColor, VkCompareOp compareOp, VkSamplerMipmapMode mipmapMode) : appDevice{appDevice}, image{image} 
+  {
+    this->createTextureSampler(filterMode, addressMode, anistropyEnable, borderColor, compareOp, mipmapMode);
   }
 
   EngineTexture::~EngineTexture() {
@@ -23,7 +31,6 @@ namespace nugiEngine {
   void EngineTexture::createTextureImage(const char* textureFileName) {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(textureFileName, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
       throw std::runtime_error("failed to load texture image!");
@@ -39,7 +46,8 @@ namespace nugiEngine {
 			pixelSize,
 			pixelCount,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			VMA_MEMORY_USAGE_AUTO,
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		};
 
     stagingBuffer.map();
@@ -48,9 +56,10 @@ namespace nugiEngine {
 
     stbi_image_free(pixels);
 
-    this->image = std::make_unique<EngineImage>(this->appDevice, texWidth, texHeight, this->mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, 
+    this->image = std::make_shared<EngineImage>(this->appDevice, texWidth, texHeight, this->mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, 
       VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+      VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, 
+      VK_IMAGE_ASPECT_COLOR_BIT);
 
     this->image->transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 
@@ -61,26 +70,28 @@ namespace nugiEngine {
     // this->image->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   }
 
-  void EngineTexture::createTextureSampler() {
+  void EngineTexture::createTextureSampler(VkFilter filterMode, VkSamplerAddressMode addressMode, VkBool32 anistropyEnable, 
+    VkBorderColor borderColor, VkCompareOp compareOp, VkSamplerMipmapMode mipmapMode) 
+  {
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.magFilter = filterMode;
+    samplerInfo.minFilter = filterMode;
 
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeU = addressMode;
+    samplerInfo.addressModeV = addressMode;
+    samplerInfo.addressModeW = addressMode;
 
-    samplerInfo.anisotropyEnable = VK_TRUE;
+    samplerInfo.anisotropyEnable = anistropyEnable;
     samplerInfo.maxAnisotropy = this->appDevice.getProperties().limits.maxSamplerAnisotropy;
 
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.borderColor = borderColor;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
     samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.compareOp = compareOp;
 
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipmapMode = mipmapMode;
     samplerInfo.minLod = 0.0f; // Optional
     samplerInfo.maxLod = static_cast<float>(this->mipLevels);
     samplerInfo.mipLodBias = 0.0f; // Optional
@@ -90,9 +101,9 @@ namespace nugiEngine {
     }
   }
 
-  VkDescriptorImageInfo EngineTexture::getDescriptorInfo() {
+  VkDescriptorImageInfo EngineTexture::getDescriptorInfo(VkImageLayout desiredImageLayout) {
     VkDescriptorImageInfo imageInfo{};
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageLayout = desiredImageLayout;
     imageInfo.imageView = this->image->getImageView();
     imageInfo.sampler = this->sampler;
 

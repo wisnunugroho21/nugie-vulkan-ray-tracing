@@ -6,7 +6,7 @@
 #include "../../vulkan/buffer/buffer.hpp"
 #include "../../vulkan/descriptor/descriptor.hpp"
 #include "../../vulkan/command/command_buffer.hpp"
-#include "../ray_ubo.hpp"
+#include "../general_struct.hpp"
 
 #include <memory>
 #include <vector>
@@ -44,8 +44,8 @@ namespace nugiEngine {
 			std::shared_ptr<EngineCommandBuffer> beginCommand();
 			void endCommand(std::shared_ptr<EngineCommandBuffer>);
 
-			void submitCommands(std::vector<std::shared_ptr<EngineCommandBuffer>> commandBuffer);
-			void submitCommand(std::shared_ptr<EngineCommandBuffer> commandBuffer);
+			void submitRenderCommands(std::vector<std::shared_ptr<EngineCommandBuffer>> commandBuffer);
+			void submitRenderCommand(std::shared_ptr<EngineCommandBuffer> commandBuffer);
 
 			bool acquireFrame();
 			bool presentFrame();
@@ -63,11 +63,10 @@ namespace nugiEngine {
 
 			std::shared_ptr<EngineDescriptorPool> descriptorPool;
 
-			std::vector<VkSemaphore> imageAvailableSemaphores;
-			std::vector<VkSemaphore> renderFinishedSemaphores;
+			std::vector<VkSemaphore> imageAvailableSemaphores, renderFinishedSemaphores;
 			std::vector<VkFence> inFlightFences;
 
 			uint32_t currentImageIndex = 0, currentFrameIndex = 0;
-			bool isFrameStarted = false;
+			bool isFrameStarted = false, isLoadResouce = false;
 	};
 }

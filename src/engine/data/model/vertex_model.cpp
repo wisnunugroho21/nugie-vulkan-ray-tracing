@@ -4,20 +4,22 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <tiny_obj_loader.h>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
 namespace nugiEngine {
-	EngineVertexModel::EngineVertexModel(EngineDevice &device, const VertexModelData &datas) : engineDevice{device} {
-		this->createVertexBuffers(datas.vertices);
-		this->createIndexBuffer(datas.indices);
+	EngineVertexModel::EngineVertexModel(EngineDevice &device, std::shared_ptr<std::vector<Vertex>> vertices, std::shared_ptr<std::vector<uint32_t>> indices, std::shared_ptr<EngineCommandBuffer> commandBuffer) : engineDevice{device} {
+		this->createVertexBuffers(vertices, commandBuffer);
+		this->createIndexBuffer(indices, commandBuffer);
 	}
 
-	void EngineVertexModel::createVertexBuffers(const std::vector<Vertex> &vertices) {
-		this->vertextCount = static_cast<uint32_t>(vertices.size());
+	void EngineVertexModel::createVertexBuffers(std::shared_ptr<std::vector<Vertex>> vertices, std::shared_ptr<EngineCommandBuffer> commandBuffer) {
+		this->vertextCount = static_cast<uint32_t>(vertices->size());
 		assert(vertextCount >= 3 && "Vertex count must be at least 3");
 
-		uint32_t vertexSize = sizeof(vertices[0]);
+		uint32_t vertexSize = static_cast<uint32_t>(sizeof(Vertex));
 		VkDeviceSize bufferSize = vertexSize * vertextCount;
 
 		EngineBuffer stagingBuffer {
@@ -25,32 +27,34 @@ namespace nugiEngine {
 			vertexSize,
 			this->vertextCount,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			VMA_MEMORY_USAGE_AUTO,
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		};
 
 		stagingBuffer.map();
-		stagingBuffer.writeToBuffer((void *) vertices.data());
+		stagingBuffer.writeToBuffer((void *) vertices->data());
 
 		this->vertexBuffer = std::make_unique<EngineBuffer>(
 			this->engineDevice,
 			vertexSize,
 			this->vertextCount,
 			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+			VMA_MEMORY_USAGE_AUTO,
+			VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
 		);
 
-		this->vertexBuffer->copyBuffer(stagingBuffer.getBuffer(), bufferSize);
+		this->vertexBuffer->copyBuffer(stagingBuffer.getBuffer(), bufferSize, commandBuffer);
 	}
 
-	void EngineVertexModel::createIndexBuffer(const std::vector<uint32_t> &indices) { 
-		this->indexCount = static_cast<uint32_t>(indices.size());
+	void EngineVertexModel::createIndexBuffer(std::shared_ptr<std::vector<uint32_t>> indices, std::shared_ptr<EngineCommandBuffer> commandBuffer) { 
+		this->indexCount = static_cast<uint32_t>(indices->size());
 		this->hasIndexBuffer = this->indexCount > 0;
 
 		if (!this->hasIndexBuffer) {
 			return;
 		}
 
-		uint32_t indexSize = sizeof(indices[0]);
+		uint32_t indexSize = static_cast<uint32_t>(sizeof(uint32_t));
 		VkDeviceSize bufferSize = indexSize * this->indexCount;
 
 		EngineBuffer stagingBuffer {
@@ -58,21 +62,23 @@ namespace nugiEngine {
 			indexSize,
 			this->indexCount,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			VMA_MEMORY_USAGE_AUTO,
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 		};
 
 		stagingBuffer.map();
-		stagingBuffer.writeToBuffer((void *) indices.data());
+		stagingBuffer.writeToBuffer((void *) indices->data());
 
 		this->indexBuffer = std::make_unique<EngineBuffer>(
 			this->engineDevice,
 			indexSize,
 			this->indexCount,
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+			VMA_MEMORY_USAGE_AUTO,
+			VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
 		);
 
-		this->indexBuffer->copyBuffer(stagingBuffer.getBuffer(), bufferSize);
+		this->indexBuffer->copyBuffer(stagingBuffer.getBuffer(), bufferSize, commandBuffer);
 	}
 
 	void EngineVertexModel::bind(std::shared_ptr<EngineCommandBuffer> commandBuffer) {
@@ -92,24 +98,5 @@ namespace nugiEngine {
 			vkCmdDraw(commandBuffer->getCommandBuffer(), this->vertextCount, 1, 0, 0);
 		}
 	}
-
-	std::vector<VkVertexInputBindingDescription> Vertex::getVertexBindingDescriptions() {
-		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
-		bindingDescriptions[0].binding = 0;
-		bindingDescriptions[0].stride = sizeof(Vertex);
-		bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescriptions;
-	}
-
-	std::vector<VkVertexInputAttributeDescription> Vertex::getVertexAttributeDescriptions() {
-		std::vector<VkVertexInputAttributeDescription> attributeDescription(1);
-		
-		attributeDescription[0].binding = 0;
-		attributeDescription[0].location = 0;
-		attributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescription[0].offset = offsetof(Vertex, position);
-
-		return attributeDescription;
-	} 
 } // namespace nugiEngine
 

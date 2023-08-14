@@ -7,7 +7,7 @@
 
 #include "../sort/sort.hpp"
 #include "../transform/transform.hpp"
-#include "../../ray_ubo.hpp"
+#include "../../general_struct.hpp"
 
 #include <vector>
 #include <memory>
@@ -41,9 +41,9 @@ namespace nugiEngine {
 
   struct PrimitiveBoundBox : BoundBox {
     Primitive &primitive;
-    std::shared_ptr<std::vector<RayTraceVertex>> vertices;
+    std::shared_ptr<std::vector<Vertex>> vertices;
 
-    PrimitiveBoundBox(uint32_t i, Primitive &p, std::shared_ptr<std::vector<RayTraceVertex>> v) : BoundBox(i), primitive{p}, vertices{v} {}
+    PrimitiveBoundBox(uint32_t i, Primitive &p, std::shared_ptr<std::vector<Vertex>> v) : BoundBox(i), primitive{p}, vertices{v} {}
 
     Aabb boundingBox();
   };
@@ -52,12 +52,12 @@ namespace nugiEngine {
     Object &object;
     std::shared_ptr<TransformComponent> transformation;
     std::shared_ptr<std::vector<Primitive>> primitives;
-    std::shared_ptr<std::vector<RayTraceVertex>> vertices;
+    std::shared_ptr<std::vector<Vertex>> vertices;
 
     glm::vec3 originalMin{};
     glm::vec3 originalMax{};
 
-    ObjectBoundBox(uint32_t i, Object &o, std::shared_ptr<std::vector<Primitive>> p, std::shared_ptr<TransformComponent> t, std::shared_ptr<std::vector<RayTraceVertex>> v);
+    ObjectBoundBox(uint32_t i, Object &o, std::shared_ptr<std::vector<Primitive>> p, std::shared_ptr<TransformComponent> t, std::shared_ptr<std::vector<Vertex>> v);
 
     glm::vec3 getOriginalMin() { return this->originalMin; }
     glm::vec3 getOriginalMax() { return this->originalMax; }
@@ -69,11 +69,18 @@ namespace nugiEngine {
       float findMin(uint32_t index);
   };
 
+  struct PointLightBoundBox : BoundBox {
+    PointLight &light;
+
+    PointLightBoundBox(int i, PointLight &l) : BoundBox(i), light{l} {}
+
+    Aabb boundingBox();
+  };
+
   struct TriangleLightBoundBox : BoundBox {
     TriangleLight &light;
-    std::shared_ptr<std::vector<RayTraceVertex>> vertices;
 
-    TriangleLightBoundBox(int i, TriangleLight &l, std::shared_ptr<std::vector<RayTraceVertex>> v) : BoundBox(i), light{l}, vertices{v} {}
+    TriangleLightBoundBox(int i, TriangleLight &l) : BoundBox(i), light{l} {}
 
     Aabb boundingBox();
   };
@@ -92,11 +99,11 @@ namespace nugiEngine {
   bool nodeCompare(BvhItemBuild &a, BvhItemBuild &b);
   Aabb surroundingBox(Aabb box0, Aabb box1);
   Aabb objectListBoundingBox(std::vector<std::shared_ptr<BoundBox>> &objects);
-  bool boxCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b, int axis);
+  bool boxCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b, uint32_t axis);
   bool boxXCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b);
   bool boxYCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b);
   bool boxZCompare(std::shared_ptr<BoundBox> a, std::shared_ptr<BoundBox> b);
-  int findPrimitiveSplitIndex(BvhItemBuild node, int axis, float length);
+  uint32_t findPrimitiveSplitIndex(BvhItemBuild node, uint32_t axis, float length);
 
   // Since GPU can't deal with tree structures we need to create a flattened BVH.
   // Stack is used instead of a tree.

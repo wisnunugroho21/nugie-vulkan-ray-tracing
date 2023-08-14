@@ -2,11 +2,11 @@
 
 namespace nugiEngine {
   EngineImage::EngineImage(EngineDevice &appDevice, uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, 
-    VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, 
+    VkFormat format, VkImageTiling tiling, VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags memoryPropertyFlags, 
     VkImageAspectFlags aspectFlags) 
     : appDevice{appDevice}, height{height}, width{width}, mipLevels{mipLevels}, format{format}, aspectFlags{aspectFlags} 
   {
-    this->createImage(numSamples, tiling, usage, properties);
+    this->createImage(numSamples, tiling, imageUsage, memoryUsage, memoryPropertyFlags);
     this->createImageView();
 
     this->isImageCreatedByUs = true;
@@ -24,11 +24,10 @@ namespace nugiEngine {
 
     if (this->isImageCreatedByUs) {
       vkDestroyImage(this->appDevice.getLogicalDevice(), this->image, nullptr);
-      vkFreeMemory(this->appDevice.getLogicalDevice(), this->imageMemory, nullptr);
     }
   }
 
-  void EngineImage::createImage(VkSampleCountFlagBits numSamples, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties) {
+  void EngineImage::createImage(VkSampleCountFlagBits numSamples, VkImageTiling tiling, VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, VmaAllocationCreateFlags memoryPropertyFlags) {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -40,28 +39,16 @@ namespace nugiEngine {
     imageInfo.format = this->format;
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = usage;
+    imageInfo.usage = imageUsage;
     imageInfo.samples = numSamples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateImage(this->appDevice.getLogicalDevice(), &imageInfo, nullptr, &this->image) != VK_SUCCESS) {
+    VmaAllocationCreateInfo allocInfo{};
+    allocInfo.usage = memoryUsage;
+    allocInfo.flags = memoryPropertyFlags;
+
+    if (vmaCreateImage(this->appDevice.getMemoryAllocator(), &imageInfo, &allocInfo, &this->image, &this->allocation, &this->allocationInfo) != VK_SUCCESS) {
       throw std::runtime_error("failed to create image!");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(this->appDevice.getLogicalDevice(), this->image, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = this->appDevice.findMemoryType(memRequirements.memoryTypeBits, properties);
-
-    if (vkAllocateMemory(this->appDevice.getLogicalDevice(), &allocInfo, nullptr, &this->imageMemory) != VK_SUCCESS) {
-      throw std::runtime_error("failed to allocate image memory!");
-    }
-
-    if (vkBindImageMemory(this->appDevice.getLogicalDevice(), this->image, this->imageMemory, 0) != VK_SUCCESS) {
-      throw std::runtime_error("failed to bind image memory!");
     }
   }
 
@@ -243,7 +230,7 @@ namespace nugiEngine {
     }
   }
 
-  void EngineImage::generateMipMap() {
+  void EngineImage::generateMipMap(std::shared_ptr<EngineCommandBuffer> commandBuffer) {
     if (!this->isImageCreatedByUs) {
       throw std::runtime_error("cannot generate mipmap if the image is not created by this class => image directly assigned to this class via second constructor");
     }
@@ -256,8 +243,14 @@ namespace nugiEngine {
       throw std::runtime_error("texture image format does not support linear blitting!");
     }
 
-    EngineCommandBuffer commandBuffer{this->appDevice};
-    commandBuffer.beginSingleTimeCommand();
+    bool isCommandBufferCreatedHere = false;
+    
+    if (commandBuffer == nullptr) {
+      commandBuffer = std::make_shared<EngineCommandBuffer>(this->appDevice);
+      commandBuffer->beginSingleTimeCommand();
+
+      isCommandBufferCreatedHere = true;  
+    }
 
     VkImageMemoryBarrier barrier{};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -280,7 +273,7 @@ namespace nugiEngine {
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
       vkCmdPipelineBarrier(
-        commandBuffer.getCommandBuffer(),
+        commandBuffer->getCommandBuffer(),
         VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
         0, nullptr,
         0, nullptr,
@@ -303,7 +296,7 @@ namespace nugiEngine {
       blit.dstSubresource.layerCount = 1;
 
       vkCmdBlitImage(
-        commandBuffer.getCommandBuffer(),
+        commandBuffer->getCommandBuffer(),
         this->image, 
         VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         this->image, 
@@ -319,7 +312,7 @@ namespace nugiEngine {
       barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
       vkCmdPipelineBarrier(
-        commandBuffer.getCommandBuffer(),
+        commandBuffer->getCommandBuffer(),
         VK_PIPELINE_STAGE_TRANSFER_BIT, 
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 
         0,
@@ -340,15 +333,17 @@ namespace nugiEngine {
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
     vkCmdPipelineBarrier(
-      commandBuffer.getCommandBuffer(),
+      commandBuffer->getCommandBuffer(),
       VK_PIPELINE_STAGE_TRANSFER_BIT, 
       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0,
       0, nullptr,
       0, nullptr,
       1, &barrier);
 
-    commandBuffer.endCommand();
-    commandBuffer.submitCommand(this->appDevice.getTransferQueue(0));
+    if (isCommandBufferCreatedHere) {
+      commandBuffer->endCommand();
+      commandBuffer->submitCommand(this->appDevice.getTransferQueue(0));
+    }
   }
 
   VkDescriptorImageInfo EngineImage::getDescriptorInfo(VkImageLayout desiredImageLayout) {

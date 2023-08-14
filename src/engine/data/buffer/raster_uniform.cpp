@@ -1,4 +1,4 @@
-#include "global_uniform.hpp"
+#include "raster_uniform.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -10,11 +10,11 @@
 #include <string>
 
 namespace nugiEngine {
-	EngineGlobalUniform::EngineGlobalUniform(EngineDevice& device) : appDevice{device} {
+	EngineRasterUniform::EngineRasterUniform(EngineDevice& device) : appDevice{device} {
 		this->createUniformBuffer();
 	}
 
-	std::vector<VkDescriptorBufferInfo> EngineGlobalUniform::getBuffersInfo() const {
+	std::vector<VkDescriptorBufferInfo> EngineRasterUniform::getBuffersInfo() const {
 		std::vector<VkDescriptorBufferInfo> buffersInfo{};
 		
 		for (int i = 0; i < this->uniformBuffers.size(); i++) {
@@ -24,16 +24,17 @@ namespace nugiEngine {
 		return buffersInfo;
 	}
 
-	void EngineGlobalUniform::createUniformBuffer() {
+	void EngineRasterUniform::createUniformBuffer() {
 		this->uniformBuffers.clear();
 
 		for (uint32_t i = 0; i < EngineDevice::MAX_FRAMES_IN_FLIGHT; i++) {
 			auto uniformBuffer = std::make_shared<EngineBuffer>(
 				this->appDevice,
-				sizeof(RayTraceUbo),
+				sizeof(RasterUbo),
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+				VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
+				VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
 			);
 
 			uniformBuffer->map();
@@ -41,7 +42,7 @@ namespace nugiEngine {
 		}
 	}
 
-	void EngineGlobalUniform::writeGlobalData(uint32_t frameIndex, RayTraceUbo ubo) {
+	void EngineRasterUniform::writeGlobalData(uint32_t frameIndex, RasterUbo ubo) {
 		this->uniformBuffers[frameIndex]->writeToBuffer(&ubo);
 		this->uniformBuffers[frameIndex]->flush();
 	}

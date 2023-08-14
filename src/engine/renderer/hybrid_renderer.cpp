@@ -45,14 +45,12 @@ namespace nugiEngine {
 	}
 
 	void EngineHybridRenderer::createDescriptorPool() {
-		uint32_t nSample = 8;
-		uint32_t imageCount = static_cast<uint32_t>(this->swapChain->getswapChainImages().size());
-
 		this->descriptorPool = 
 			EngineDescriptorPool::Builder(this->appDevice)
-				.setMaxSets(imageCount * nSample + imageCount)
-				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, imageCount * nSample + imageCount * 2)
-				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * imageCount * nSample)
+				.setMaxSets(20)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 50)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 50)
+				.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 100)
 				.build();
 	}
 
@@ -70,13 +68,13 @@ namespace nugiEngine {
 
 		for (size_t i = 0; i < EngineDevice::MAX_FRAMES_IN_FLIGHT; i++) {
 		  if (vkCreateSemaphore(this->appDevice.getLogicalDevice(), &semaphoreInfo, nullptr, &this->imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(this->appDevice.getLogicalDevice(), &semaphoreInfo, nullptr, &this->renderFinishedSemaphores[i]) != VK_SUCCESS ||
-			vkCreateFence(this->appDevice.getLogicalDevice(), &fenceInfo, nullptr, &this->inFlightFences[i]) != VK_SUCCESS) 
-		  {
-			throw std::runtime_error("failed to create synchronization objects for a frame!");
+				vkCreateSemaphore(this->appDevice.getLogicalDevice(), &semaphoreInfo, nullptr, &this->renderFinishedSemaphores[i]) != VK_SUCCESS ||
+				vkCreateFence(this->appDevice.getLogicalDevice(), &fenceInfo, nullptr, &this->inFlightFences[i]) != VK_SUCCESS) 
+			{
+				throw std::runtime_error("failed to create synchronization objects for a frame!");
 		  }
 		}
-	  }
+	}
 
 	bool EngineHybridRenderer::acquireFrame() {
 		assert(!this->isFrameStarted && "can't acquire frame while frame still in progress");
@@ -109,23 +107,23 @@ namespace nugiEngine {
 		commandBuffer->endCommand();
 	}
 
-	void EngineHybridRenderer::submitCommands(std::vector<std::shared_ptr<EngineCommandBuffer>> commandBuffer) {
+	void EngineHybridRenderer::submitRenderCommands(std::vector<std::shared_ptr<EngineCommandBuffer>> commandBuffer) {
 		assert(this->isFrameStarted && "can't submit command if frame is not in progress");
 		vkResetFences(this->appDevice.getLogicalDevice(), 1, &this->inFlightFences[this->currentFrameIndex]);
 
-		std::vector<VkSemaphore> waitSemaphores = {this->imageAvailableSemaphores[this->currentFrameIndex]};
-		std::vector<VkSemaphore> signalSemaphores = {this->renderFinishedSemaphores[this->currentFrameIndex]};
+		std::vector<VkSemaphore> waitSemaphores = { this->imageAvailableSemaphores[this->currentFrameIndex] };
+		std::vector<VkSemaphore> signalSemaphores = { this->renderFinishedSemaphores[this->currentFrameIndex] };
 		std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		EngineCommandBuffer::submitCommands(commandBuffers, this->appDevice.getGraphicsQueue(this->currentFrameIndex), waitSemaphores, waitStages, signalSemaphores, this->inFlightFences[this->currentFrameIndex]);
 	}
 
-	void EngineHybridRenderer::submitCommand(std::shared_ptr<EngineCommandBuffer> commandBuffer) {
+	void EngineHybridRenderer::submitRenderCommand(std::shared_ptr<EngineCommandBuffer> commandBuffer) {
 		assert(this->isFrameStarted && "can't submit command if frame is not in progress");
 		vkResetFences(this->appDevice.getLogicalDevice(), 1, &this->inFlightFences[this->currentFrameIndex]);
 
-		std::vector<VkSemaphore> waitSemaphores = {this->imageAvailableSemaphores[this->currentFrameIndex]};
-		std::vector<VkSemaphore> signalSemaphores = {this->renderFinishedSemaphores[this->currentFrameIndex]};
+		std::vector<VkSemaphore> waitSemaphores = { this->imageAvailableSemaphores[this->currentFrameIndex] };
+		std::vector<VkSemaphore> signalSemaphores = { this->renderFinishedSemaphores[this->currentFrameIndex] };
 		std::vector<VkPipelineStageFlags> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
 		commandBuffer->submitCommand(this->appDevice.getGraphicsQueue(this->currentFrameIndex), waitSemaphores, waitStages, signalSemaphores, this->inFlightFences[this->currentFrameIndex]);
@@ -138,7 +136,6 @@ namespace nugiEngine {
 		auto result = this->swapChain->presentRenders(this->appDevice.getPresentQueue(this->currentFrameIndex), &this->currentImageIndex, waitSemaphores);
 
 		this->currentFrameIndex = (this->currentFrameIndex + 1) % EngineDevice::MAX_FRAMES_IN_FLIGHT;
-
 		this->isFrameStarted = false;
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || this->appWindow.wasResized()) {

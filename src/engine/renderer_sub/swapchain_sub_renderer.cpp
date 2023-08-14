@@ -22,7 +22,8 @@ namespace nugiEngine {
       auto colorImage = std::make_shared<EngineImage>(
         this->device, this->width, this->height, 1, msaaSamples, colorFormat,
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT
+        VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, 
+        VK_IMAGE_ASPECT_COLOR_BIT
       );
 
       this->colorImages.push_back(colorImage);
@@ -39,7 +40,8 @@ namespace nugiEngine {
       auto depthImage = std::make_shared<EngineImage>(
         this->device, this->width, this->height, 1, msaaSamples, depthFormat, 
         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT
+        VMA_MEMORY_USAGE_AUTO, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, 
+        VK_IMAGE_ASPECT_DEPTH_BIT
       );
 
       this->depthImages.push_back(depthImage);
@@ -48,6 +50,24 @@ namespace nugiEngine {
 
   void EngineSwapChainSubRenderer::createRenderPass(VkFormat swapChainImageFormat, int imageCount) {
     auto msaaSamples = this->device.getMSAASamples();
+
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = swapChainImageFormat;
+    colorAttachment.samples = msaaSamples;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference colorAttachmentRef = {};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkPipelineColorBlendAttachmentState colorColorBlendAttachment{};
+    colorColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorColorBlendAttachment.blendEnable = VK_FALSE;
 
     VkAttachmentDescription depthAttachment{};
     depthAttachment.format = this->findDepthFormat();
@@ -62,20 +82,6 @@ namespace nugiEngine {
     VkAttachmentReference depthAttachmentRef{};
     depthAttachmentRef.attachment = 1;
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = msaaSamples;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription colorResolveAttachment{};
     colorResolveAttachment.format = swapChainImageFormat;
@@ -113,6 +119,7 @@ namespace nugiEngine {
 			.addAttachments(colorAttachment)
 			.addAttachments(depthAttachment)
 			.addAttachments(colorResolveAttachment)
+      .addColorBlendAttachments(colorColorBlendAttachment)
 			.addSubpass(subpass)
 			.addDependency(dependency);
 

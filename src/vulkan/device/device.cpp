@@ -1,5 +1,8 @@
 #include "device.hpp"
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 // std headers
 #include <cstring>
 #include <iostream>
@@ -54,12 +57,14 @@ namespace nugiEngine {
     this->setupDebugMessenger();
     this->createSurface();
     this->pickPhysicalDevice();
-    this->msaaSamples = this->getMaxUsableFlagsCount();
+    this->msaaSamples = this->getMaxMSAASample();
     this->createLogicalDevice();
+    this->createMemoryAllocator();
     this->createCommandPool();
   }
 
   EngineDevice::~EngineDevice() {
+    vmaDestroyAllocator(this->allocator);
     vkDestroyCommandPool(this->device, this->commandPool, nullptr);
     vkDestroyDevice(this->device, nullptr);
 
@@ -206,6 +211,19 @@ namespace nugiEngine {
       vkGetDeviceQueue(this->device, this->familyIndices.presentFamily, i, &this->presentQueue[i]);
       vkGetDeviceQueue(this->device, this->familyIndices.computeFamily, i, &this->computeQueue[i]);
       vkGetDeviceQueue(this->device, this->familyIndices.transferFamily, i, &this->transferQueue[i]);
+    }
+  }
+
+  void EngineDevice::createMemoryAllocator() {
+    VmaAllocatorCreateInfo allocatorCreateInfo = {};
+    allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+    allocatorCreateInfo.physicalDevice = this->physicalDevice;
+    allocatorCreateInfo.device = this->device;
+    allocatorCreateInfo.instance = this->instance;
+    allocatorCreateInfo.pVulkanFunctions = nullptr;
+
+    if (vmaCreateAllocator(&allocatorCreateInfo, &allocator) != VK_SUCCESS) {
+      throw std::runtime_error("failed to create memory allocator!");
     }
   }
 
@@ -420,19 +438,22 @@ namespace nugiEngine {
     return details;
   }
 
-  VkFormat EngineDevice::findSupportedFormat( const std::vector<VkFormat> &candidates, 
-      VkImageTiling tiling, VkFormatFeatureFlags features) {
+  VkFormat EngineDevice::findSupportedFormat(const std::vector<VkFormat> &candidates, 
+    VkImageTiling tiling, VkFormatFeatureFlags features) 
+  {
     for (VkFormat format : candidates) {
       VkFormatProperties props;
       vkGetPhysicalDeviceFormatProperties(this->physicalDevice, format, &props);
 
       if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
         return format;
-      } else if (
-          tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+      } 
+      
+      if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
         return format;
       }
     }
+
     throw std::runtime_error("failed to find supported format!");
   }
 
@@ -441,7 +462,8 @@ namespace nugiEngine {
     vkGetPhysicalDeviceMemoryProperties(this->physicalDevice, &memProperties);
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
       if ((typeFilter & (1 << i)) &&
-          (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+      {
         return i;
       }
     }
@@ -449,7 +471,7 @@ namespace nugiEngine {
     throw std::runtime_error("failed to find suitable memory type!");
   }
 
-  VkSampleCountFlagBits EngineDevice::getMaxUsableFlagsCount() {
+  VkSampleCountFlagBits EngineDevice::getMaxMSAASample() {
     VkSampleCountFlags counts = this->properties.limits.framebufferColorSampleCounts & this->properties.limits.framebufferDepthSampleCounts;
 
     if (counts & VK_SAMPLE_COUNT_64_BIT) return VK_SAMPLE_COUNT_64_BIT;
