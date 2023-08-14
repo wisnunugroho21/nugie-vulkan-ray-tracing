@@ -39,14 +39,8 @@ namespace nugiEngine {
 	void EngineForwardPassRenderSystem::createPipeline(std::shared_ptr<EngineRenderPass> renderPass) {
 		assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
-		VkPipelineMultisampleStateCreateInfo multisampleInfo{};
-		multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampleInfo.sampleShadingEnable = VK_FALSE;
-		multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
 		this->pipeline = EngineGraphicPipeline::Builder(this->appDevice, renderPass, this->pipelineLayout)
 			.setDefault("shader/forward_pass.vert.spv", "shader/forward_pass.frag.spv")
-			.setMultisampleInfo(multisampleInfo)
 			.build();
 	}
 
