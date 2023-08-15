@@ -204,25 +204,43 @@ namespace nugiEngine {
 	}
 
 	void EngineApp::updateCamera(uint32_t width, uint32_t height) {
-		// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-		glm::mat4 Projection = glm::perspective(glm::radians(40.0f), (float) width / (float) height, 0.1f, 2000.0f);
-		Projection[1][1] *= -1;
-			
-		// Or, for an ortho camera :
-		//glm::mat4 Projection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
-			
-		// Camera matrix
-		glm::mat4 View = glm::lookAt(
-			glm::vec3(278.0f, 278.0f, -800.0f), // Camera is at (4,3,3), in World Space
-			glm::vec3(0.0f, 0.0f, 0.0f), // and looks at the origin
-			glm::vec3(0.0f, 0.0f, 1.0f)  // Head is up (set to 0,-1,0 to look upside-down)
-		);
-			
-		// Model matrix : an identity matrix (model will be at the origin)
-		glm::mat4 Model = glm::mat4(1.0f);
+		glm::vec3 position = glm::vec3(278.0f, 278.0f, -800.0f);
+		glm::vec3 direction = glm::vec3(0.0f, 0.0f, 800.0f);
+		glm::vec3 vup = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		// Our viewProjection : multiplication of our 3 matrices
-		this->rasterUbo.viewProjection = Projection * View * Model; // Remember, matrix multiplication is the other way around
+		float near = 0.1f;
+		float far = 2000.0f;
+
+		constexpr float theta = glm::radians(40.0f);
+		float tanHalfFovy = glm::tan(theta / 2.0f);
+		float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+		glm::vec3 w = glm::normalize(direction);
+		glm::vec3 u = glm::normalize(glm::cross(w, vup));
+		glm::vec3 v = glm::cross(w, u);
+
+		auto view = glm::mat4{1.0f};
+		view[0][0] = u.x;
+    view[1][0] = u.y;
+    view[2][0] = u.z;
+    view[0][1] = v.x;
+    view[1][1] = v.y;
+    view[2][1] = v.z;
+    view[0][2] = w.x;
+    view[1][2] = w.y;
+    view[2][2] = w.z;
+    view[3][0] = -glm::dot(u, position);
+    view[3][1] = -glm::dot(v, position);
+    view[3][2] = -glm::dot(w, position);
+
+		auto projection = glm::mat4{0.0f};
+		projection[0][0] = 1.f / (aspectRatio * tanHalfFovy);
+    projection[1][1] = 1.f / (tanHalfFovy);
+    projection[2][2] = far / (far - near);
+    projection[2][3] = 1.f;
+    projection[3][2] = -(far * near) / (far - near);
+
+		this->rasterUbo.viewProjection = projection * view;
 	}
 
 	void EngineApp::recreateSubRendererAndSubsystem() {
