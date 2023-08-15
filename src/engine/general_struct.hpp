@@ -87,7 +87,7 @@ namespace nugiEngine {
   };
 
   struct RasterUbo {
-    glm::mat4 modelViewProjection{1.0f};
+    glm::mat4 viewProjection{1.0f};
   };
 
   struct RayTracePushConstant {

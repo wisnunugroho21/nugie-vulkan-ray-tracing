@@ -2,6 +2,7 @@
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
@@ -205,6 +206,7 @@ namespace nugiEngine {
 	void EngineApp::updateCamera(uint32_t width, uint32_t height) {
 		// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 		glm::mat4 Projection = glm::perspective(glm::radians(40.0f), (float) width / (float) height, 0.1f, 2000.0f);
+		Projection[1][1] *= -1;
 			
 		// Or, for an ortho camera :
 		//glm::mat4 Projection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
@@ -213,14 +215,14 @@ namespace nugiEngine {
 		glm::mat4 View = glm::lookAt(
 			glm::vec3(278.0f, 278.0f, -800.0f), // Camera is at (4,3,3), in World Space
 			glm::vec3(0.0f, 0.0f, 0.0f), // and looks at the origin
-			glm::vec3(0.0f, 1.0f, 0.0f)  // Head is up (set to 0,-1,0 to look upside-down)
+			glm::vec3(0.0f, 0.0f, 1.0f)  // Head is up (set to 0,-1,0 to look upside-down)
 		);
 			
 		// Model matrix : an identity matrix (model will be at the origin)
 		glm::mat4 Model = glm::mat4(1.0f);
 
-		// Our ModelViewProjection : multiplication of our 3 matrices
-		this->rasterUbo.modelViewProjection = Projection * View * Model; // Remember, matrix multiplication is the other way around
+		// Our viewProjection : multiplication of our 3 matrices
+		this->rasterUbo.viewProjection = Projection * View * Model; // Remember, matrix multiplication is the other way around
 	}
 
 	void EngineApp::recreateSubRendererAndSubsystem() {

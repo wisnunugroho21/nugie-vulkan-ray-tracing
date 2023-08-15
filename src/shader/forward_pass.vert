@@ -10,7 +10,7 @@ layout(location = 0) out vec3 positionFrag;
 layout(location = 1) flat out uint materialIndexFrag;
 
 layout(set = 0, binding = 0) uniform readonly RasterUbo {
-	mat4 modelViewProjection;
+	mat4 viewProjection;
 } ubo;
 
 layout(set = 0, binding = 1) buffer readonly TransformationSsbo {
@@ -19,7 +19,7 @@ layout(set = 0, binding = 1) buffer readonly TransformationSsbo {
 
 void main() {
 	vec4 positionWorld = transformations[transformIndex].pointMatrix * position;
-	gl_Position = ubo.modelViewProjection * positionWorld;
+	gl_Position = ubo.viewProjection * positionWorld;
 
 	positionFrag = positionWorld.xyz;
 	materialIndexFrag = materialIndex;
