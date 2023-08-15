@@ -119,10 +119,10 @@ namespace nugiEngine {
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
 		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 2u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 2u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 2u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 2u, transformIndex });
 
 		indices->emplace_back(4u);
 		indices->emplace_back(5u);
@@ -137,10 +137,10 @@ namespace nugiEngine {
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
 		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 0.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 0.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 555.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 0u, transformIndex });
 
 		indices->emplace_back(8u);
 		indices->emplace_back(9u);
@@ -155,10 +155,10 @@ namespace nugiEngine {
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
 		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 0.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 0.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 0.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 555.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 0u, transformIndex });
 
 		indices->emplace_back(12u);
 		indices->emplace_back(13u);
@@ -173,10 +173,10 @@ namespace nugiEngine {
 		transforms->emplace_back(TransformComponent{ glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f) });
 		transformIndex = static_cast<uint32_t>(transforms->size() - 1);
 
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 555.0f, 1.0f}, 1u, transformIndex });
-		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 555.0f, 1.0f}, 1u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 0.0f, 555.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{0.0f, 555.0f, 555.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 555.0f, 555.0f, 1.0f}, 0u, transformIndex });
+		vertices->emplace_back(Vertex{ glm::vec4{555.0f, 0.0f, 555.0f, 1.0f}, 0u, transformIndex });
 
 		indices->emplace_back(16u);
 		indices->emplace_back(17u);
